@@ -1,44 +1,45 @@
-import { Component } from "react";
+import { useEffect } from "react";
 import style from "./Modal.module.css";
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 
 const modalRoot = document.querySelector('#modal-root');
 
-class Modal extends Component {
-    componentDidMount = () => {
-        window.addEventListener('keydown', this.onCloseModalEscClick);
-    };
-    componentWillUnmount = () => {
-        window.removeEventListener('keydown', this.onCloseModalEscClick);
-    };
+function Modal({ onCloseModal, largeImageURL, tags }) {
 
-    onCloseModalEscClick = e => {
-        if (e.code === 'Escape') {
-            this.props.onCloseModal();
-        }
-    };
+    useEffect(() => {
+        const onCloseModalEscClick = e => {
+            if (e.code === 'Escape') {
+                onCloseModal();
+            };
+        };
+        window.addEventListener('keydown', onCloseModalEscClick);
+        return () => {
+            window.removeEventListener('keydown', onCloseModalEscClick);
+        };
 
-    onCloseModal = e => {
+    });
+
+
+    const closeModal = e => {
         if (e.currentTarget === e.target) {
-            this.props.onCloseModal()
+            onCloseModal()
         }
+    };
 
-    }
-    render() {
-        return createPortal(
-            <div
-                onClick={this.onCloseModal}
-                className={style.Overlay}>
-                <div className={style.Modal}>
-                    <img
-                        src={this.props.largeImageURL}
-                        alt={this.props.tags} />
-                </div>
-            </div >,
-            modalRoot,
-        );
-    }
+    return createPortal(
+        <div
+            onClick={closeModal}
+            className={style.Overlay}>
+            <div className={style.Modal}>
+                <img
+                    src={largeImageURL}
+                    alt={tags} />
+            </div>
+        </div >,
+        modalRoot,
+    );
+
 };
 
 Modal.propTypes = {
