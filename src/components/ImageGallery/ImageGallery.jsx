@@ -37,19 +37,17 @@ function ImageGallery({ onLoadMoreBtn, searchQwery, pageNumber }) {
                         setStatus('idle');
                         Notiflix.Notify.warning(`Ух...Щось пішло не так, або дані за Вашим запитом відсутні`)
                         return;
-                    }
+                    };
                 })
                 .catch(error => {
                     setError(error);
                     setStatus('rejected');
-                })
-
-        }
+                });
+        };
 
         fetchgwery();
     }, [pageNumber, searchQwery]
     );
-
 
     const toggleModal = () => {
         setShowModal(!showModal);
@@ -90,8 +88,7 @@ function ImageGallery({ onLoadMoreBtn, searchQwery, pageNumber }) {
             {status === 'rejected' && Notiflix.Notify.warning(error.message)}
         </>
 
-    )
-
+    );
 
 };
 
