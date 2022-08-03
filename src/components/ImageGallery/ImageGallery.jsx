@@ -1,5 +1,5 @@
 import Button from "components/Button/Button";
-import { Component } from "react";
+import { useState, useEffect } from "react";
 import ImageGalleryItem from '../ImageGalleryItem/ImageGalleryItem';
 import fetchGallery from '../../service/ApiService';
 import Modal from '../Modal/Modal';
@@ -9,94 +9,90 @@ import Notiflix from 'notiflix';
 import Loader from "../Loader/Loader";
 
 
-class ImageGallery extends Component {
-    state = {
-        ImageGallery: [],
-        showModal: false,
-        largeImageURL: '',
-        tags: '',
-        status: 'idle',
-        error: null,
-        totalHits: null,
-    }
+function ImageGallery({ onLoadMoreBtn, searchQwery, pageNumber }) {
+    const [imageGallery, setImageGallery] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [largeImageURL, setLargeImageURL] = useState('');
+    const [tags, setTags] = useState('');
+    const [status, setStatus] = useState('idle');
+    const [error, setError] = useState(null);
+    const [totalHits, setTotalHits] = useState(null);
 
-    componentDidUpdate(prevProps, prevState) {
-        const { searchQwery, pageNumber } = this.props
-        if (
-            prevProps.searchQwery !== searchQwery ||
-            prevProps.pageNumber !== pageNumber
-        ) {
-            this.setState({ status: 'pending' });
+    useEffect(() => {
+        if (!searchQwery) {
+            return;
+        }
+        function fetchgwery() {
+            setStatus('pending');
             fetchGallery(searchQwery, pageNumber)
                 .then(gallery => {
-                    this.setState(prevState => ({
-                        ImageGallery: [...prevState.ImageGallery, ...gallery.hits],
-                        totalHits: gallery.totalHits,
-                        status: 'resolved',
-                    }));
-                    console.log(prevState)
-                    console.log(this.state);
-                    if (prevProps.searchQwery !== searchQwery) {
-                        this.setState({ ImageGallery: [...gallery.hits] });
-                    }
+                    pageNumber > 1
+                        ? setImageGallery(prevState => [...prevState, ...gallery.hits])
+                        : setImageGallery(gallery.hits);
+
+                    setTotalHits(gallery.totalHits);
+                    setStatus('resolved');
+
                     if (!gallery.hits.length) {
-                        this.setState({
-                            status: 'idle',
-                        });
+                        setStatus('idle');
                         Notiflix.Notify.warning(`Ух...Щось пішло не так, або дані за Вашим запитом відсутні`)
                         return;
                     }
-                    console.log(this.state.ImageGallery.length);
                 })
-                .catch(error => this.setState({ error, status: 'rejected' }))
-        };
+                .catch(error => {
+                    setError(error);
+                    setStatus('rejected');
+                })
+
+        }
+
+        fetchgwery();
+    }, [pageNumber, searchQwery]
+    );
+
+
+    const toggleModal = () => {
+        setShowModal(!showModal);
     };
-    toggleModal = () => {
-        this.setState(({ showModal }) => ({
-            showModal: !showModal,
-        }));
+
+    const onSetImage = (largeImageURL, tags) => {
+        setLargeImageURL(largeImageURL);
+        setTags(tags);
+        toggleModal();
+
     };
 
-    onSetImage = (largeImageURL, tags) => {
-        this.setState({
-            largeImageURL,
-            tags
-        });
-        this.toggleModal();
 
-    }
-    render() {
-        const { ImageGallery, showModal, largeImageURL, tags, status, error, totalHits } = this.state;
-        return (
-            <>
-                {ImageGallery.length > 0 && (
+    return (
+        <>
+            {imageGallery.length > 0 && (
 
-                    <ul className={style.ImageGallery}>
-                        {ImageGallery.map(item => (
-                            <li key={item.id}
-                                className={style.ImageGalleryItem}>
-                                < ImageGalleryItem
-                                    onSetImage={this.onSetImage}
+                <ul className={style.ImageGallery}>
+                    {imageGallery.map(item => (
+                        <li key={item.id}
+                            className={style.ImageGalleryItem}>
+                            < ImageGalleryItem
+                                onSetImage={onSetImage}
 
-                                    item={item}
-                                />
-                            </li>
-                        ))}
-                    </ul>)}
-                {status === 'pending' && < Loader />}
-                {status === 'resolved' && ImageGallery.length < totalHits && <Button onLoadMoreButtonClick={this.props.onLoadMoreBtn}></Button>}
-                {showModal && (
-                    <Modal
-                        onCloseModal={this.toggleModal}
-                        largeImageURL={largeImageURL}
-                        tags={tags}>
-                    </Modal>)}
-                {status === 'rejected' && Notiflix.Notify.warning(error.message)}
-            </>
+                                item={item}
+                            />
+                        </li>
+                    ))}
+                </ul>)}
+            {status === 'pending' && < Loader />}
+            {status === 'resolved' && imageGallery.length < totalHits && <Button onLoadMoreButtonClick={onLoadMoreBtn}></Button>}
+            {showModal && (
+                <Modal
+                    onCloseModal={toggleModal}
+                    largeImageURL={largeImageURL}
+                    tags={tags}>
+                </Modal>)}
+            {status === 'rejected' && Notiflix.Notify.warning(error.message)}
+        </>
 
-        )
+    )
 
-    }
+
 };
 
 ImageGallery.propTypes = {
