@@ -17,7 +17,6 @@ export default function App() {
 
   };
   const loadMoreBtn = () => {
-
     setPage(state => state + 1);
   };
 
